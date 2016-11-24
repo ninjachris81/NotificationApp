@@ -1,0 +1,86 @@
+{
+  "project_info": {
+    "project_number": "239847733154",
+    "firebase_url": "https://notificationservice-9528d.firebaseio.com",
+    "project_id": "notificationservice-9528d",
+    "storage_bucket": "notificationservice-9528d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:239847733154:android:3edeec11f42e3d93",
+        "android_client_info": {
+          "package_name": "de.notificationApp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "239847733154-676t2qpdtsog3oucl6ttb9tnrtnmgv6e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIhwq9B71bnnxD1KxE-cV9lLQ4gM_gz24"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:239847733154:android:e5632b66cb96e182",
+        "android_client_info": {
+          "package_name": "notificationapp.de.notificationapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "239847733154-f4blgr0jl09l4segrvtifnu51hbplpd1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "notificationapp.de.notificationapp",
+            "certificate_hash": "0DBC32B10D2EF99B35627118365EBB56ED2D7EB0"
+          }
+        },
+        {
+          "client_id": "239847733154-676t2qpdtsog3oucl6ttb9tnrtnmgv6e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIhwq9B71bnnxD1KxE-cV9lLQ4gM_gz24"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "239847733154-676t2qpdtsog3oucl6ttb9tnrtnmgv6e.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
