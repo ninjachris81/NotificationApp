@@ -1,85 +1,84 @@
-package notificationapp.de.notificationapp;
+package notificationapp.de.notificationapp.notificationapp;
 
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.TaskStackBuilder;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.RingtoneManager;
 import android.net.Uri;
-import android.os.Bundle;
-import android.support.v4.app.TaskStackBuilder;
+import android.os.Build;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.app.NotificationCompat;
+import android.os.Bundle;
 import android.util.Log;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.google.firebase.database.ChildEventListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.messaging.FirebaseMessaging;
-
 import java.util.LinkedHashMap;
+
+import notificationapp.de.notificationapp.R;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MyFirebaseMsgService";
 
-    private ListView mainList;
-    private LinkedHashMap<String, String> itemMap = new LinkedHashMap<>();
-    private HashMapAdapter adapter;
-
-    private TextView messageTitle;
-    private TextView messageBody;
-
-    private boolean isAppRunning = false;
+    public static final String CHANNEL_ID = "NotificationApp_BlitzerService";
+    public static final String DATA_CHANGED = "notificationapp.de.notificationapp.DATA_CHANGED";
 
     private static final int BLITZER_NOTIFICATION_ID = 1;
 
-    public static final String RECEIVE_DATA = "notificationapp.de.notificationapp.RECEIVE_DATA";
-    public static final String ADD_WARNING = "notificationapp.de.notificationapp.ADD_WARNING";
-    public static final String REMOVE_WARNING = "notificationapp.de.notificationapp.REMOVE_WARNING";
+    private LocalBroadcastManager bManager;
+
+    private HashMapAdapter adapter;
+    private LinkedHashMap<String, String> itemMap = new LinkedHashMap<>();
+
+    private ListView mainList;
+    //private TextView messageTitle;
+    //private TextView messageBody;
+
+    private boolean isAppRunning = false;
 
     private BroadcastReceiver bReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
 
             Log.d(TAG, "New intent " + intent.getAction());
-            if (intent.getAction().equals(RECEIVE_DATA)) {
-                refreshList(intent.getStringExtra("title"), intent.getStringExtra("body"));
-            } else if (intent.getAction().equals(ADD_WARNING)) {
-                adapter.put(intent.getStringExtra("key"), intent.getStringExtra("value"));
-                showNotification();
-            } else if (intent.getAction().equals(REMOVE_WARNING)) {
-                adapter.remove(intent.getStringExtra("key"));
+            if (intent.getAction().equals(DATA_CHANGED)) {
+                adapter.clear();
+
+                if (intent.hasExtra("values")) {
+                    int i = 0;
+                    for (String o : intent.getStringArrayListExtra("values")) {
+                        adapter.put("" + i, o);
+                        i++;
+                    }
+                    showNotification();
+                } else {
+                    Log.e(TAG, "Intent has no extra !");
+                }
             }
         }
     };
-    private LocalBroadcastManager bManager;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        FirebaseMessaging.getInstance().subscribeToTopic("blitzer");
-
         bManager = LocalBroadcastManager.getInstance(this);
         IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(RECEIVE_DATA);
-        intentFilter.addAction(ADD_WARNING);
-        intentFilter.addAction(REMOVE_WARNING);
+        intentFilter.addAction(DATA_CHANGED);
         bManager.registerReceiver(bReceiver, intentFilter);
 
         setContentView(R.layout.activity_main);
         mainList = (ListView) findViewById(R.id.mainList);
-        messageTitle = (TextView) findViewById(R.id.messageTitle);
-        messageBody = (TextView) findViewById(R.id.messageBody);
+        //messageTitle = (TextView) findViewById(R.id.messageTitle);
+        //messageBody = (TextView) findViewById(R.id.messageBody);
 
         adapter = new HashMapAdapter(this, R.layout.list_item, itemMap);
 
@@ -95,12 +94,9 @@ public class MainActivity extends AppCompatActivity {
 
             if (getIntent().hasExtra("title")) title = getIntent().getExtras().getString("title");
             if (getIntent().hasExtra("body")) body = getIntent().getExtras().getString("body");
-
-            refreshList(title, body);
         }
 
-        Intent intent = new Intent(this, MyFirebaseMessagingService.class);
-        startService(intent);
+        createNotificationChannel();
     }
 
     @Override
@@ -109,38 +105,29 @@ public class MainActivity extends AppCompatActivity {
         bManager.unregisterReceiver(bReceiver);
     }
 
-    private void refreshList(final String title, final String body) {
-        MainActivity.this.runOnUiThread(new Runnable() {
-            public void run() {
-                Log.d(TAG, "Title: " + title);
-                messageTitle.setText(title);
-
-                Log.d(TAG, "Body: " + body);
-                messageBody.setText(body);
-            }
-        });
-    }
-
-    private void clearWarningList() {
-        itemMap.clear();
-    }
-
     private void showNotification() {
-        if (isAppRunning) return;
+        if (isAppRunning) {
+            Log.i(TAG, "App is running - not showing notification");
+            return;           // dont show notification when app visible
+        }
 
-        android.support.v4.app.NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(this)
+        Log.i(TAG, "Showing notification");
+
+        NotificationCompat.Builder mBuilder =new NotificationCompat.Builder(this, CHANNEL_ID)
                         .setSmallIcon(R.drawable.ic_blitzer_icon)
                         .setContentTitle("Blitzer warning")
                         .setContentText((adapter.getCount()==0 ? "No" : adapter.getCount()) + " warnings");
         NotificationCompat.InboxStyle inboxStyle =
                 new NotificationCompat.InboxStyle();
 
-        inboxStyle.setBigContentTitle("Warnings:");
-// Moves events into the expanded layout
+        if (adapter.getCount()>0) {
+            inboxStyle.setBigContentTitle("New Warnings:");
 
-        for (int i = 0; i < adapter.getCount(); i++) {
-            inboxStyle.addLine(adapter.getItem(i).toString());
+            for (int i = 0; i < adapter.getCount(); i++) {
+                inboxStyle.addLine(adapter.getItem(i).toString());
+            }
+        } else {
+            inboxStyle.setBigContentTitle("No Warnings");
         }
 
         mBuilder.setStyle(inboxStyle);
@@ -166,10 +153,24 @@ public class MainActivity extends AppCompatActivity {
                         PendingIntent.FLAG_UPDATE_CURRENT
                 );
         mBuilder.setContentIntent(resultPendingIntent);
-        NotificationManager mNotificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManagerCompat mNotificationManager = NotificationManagerCompat.from(this);
         // mId allows you to update the notification later on.
-        mNotificationManager.notify(BLITZER_NOTIFICATION_ID, mBuilder.build());
+        Log.i(TAG, "Submit notification");
+        mNotificationManager.notify(TAG, BLITZER_NOTIFICATION_ID, mBuilder.build());
+    }
+
+    private void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "NotificationApp", importance);
+            channel.setDescription("Channel for Notification App");
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
     }
 
     @Override
@@ -195,4 +196,5 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         isAppRunning = true;
     }
+
 }

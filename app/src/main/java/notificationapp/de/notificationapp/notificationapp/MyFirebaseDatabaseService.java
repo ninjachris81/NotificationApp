@@ -1,8 +1,10 @@
-package notificationapp.de.notificationapp;
+package notificationapp.de.notificationapp.notificationapp;
 
 import android.app.IntentService;
-import android.content.Intent;
 import android.content.Context;
+import android.content.Intent;
+import android.support.annotation.NonNull;
+import android.support.constraint.solver.widgets.Snapshot;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -11,6 +13,11 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -76,46 +83,31 @@ public class MyFirebaseDatabaseService extends IntentService {
         database = FirebaseDatabase.getInstance();
         myRef = database.getReference("blitzerservice");
 
-        myRef.addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                Log.d(TAG, "onChildAdded:" + dataSnapshot.getKey());
+        myRef.addValueEventListener(new ValueEventListener(){
 
-                Intent intent = new Intent(MainActivity.ADD_WARNING);
-                intent.putExtra("key", dataSnapshot.getKey());
-                intent.putExtra("value", dataSnapshot.getValue(String.class));
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                Log.d(TAG, "onDataChange:" + dataSnapshot.toString());
+                Log.d(TAG, "onDataChange:" + dataSnapshot.getChildrenCount());
+
+                final Iterator<DataSnapshot> it = dataSnapshot.getChildren().iterator();
+
+                final ArrayList<String> warningsList = new ArrayList<String>();
+
+                while (it.hasNext()) {
+                    DataSnapshot ds = it.next();
+                    warningsList.add(ds.getValue().toString());
+                }
+
+                Intent intent = new Intent(MainActivity.DATA_CHANGED);
+                intent.putStringArrayListExtra("values", warningsList);
                 LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
             }
 
             @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-                Log.d(TAG, "onChildChanged:" + dataSnapshot.getKey());
-
-                Intent intent = new Intent(MainActivity.ADD_WARNING);
-                intent.putExtra("key", dataSnapshot.getKey());
-                intent.putExtra("value", dataSnapshot.getValue(String.class));
-                LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
-            }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-                Log.d(TAG, "onChildRemoved:" + dataSnapshot.getKey());
-                Intent intent = new Intent(MainActivity.REMOVE_WARNING);
-                intent.putExtra("key", dataSnapshot.getKey());
-                LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-                Log.d(TAG, "onChildMoved:" + dataSnapshot.getKey());
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
+            public void onCancelled(@NonNull DatabaseError databaseError) {
                 Log.w(TAG, "postComments:onCancelled", databaseError.toException());
             }
         });
-
-
     }
 }

@@ -1,4 +1,4 @@
-package notificationapp.de.notificationapp;
+package notificationapp.de.notificationapp.notificationapp;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -8,6 +8,8 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import java.util.LinkedHashMap;
+
+import notificationapp.de.notificationapp.R;
 
 /**
  * Created by B1 on 30.11.2016.
