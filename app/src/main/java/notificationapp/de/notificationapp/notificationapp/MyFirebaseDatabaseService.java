@@ -39,7 +39,6 @@ public class MyFirebaseDatabaseService extends IntentService {
     }
 
     private FirebaseDatabase database;
-    private DatabaseReference myRef;
     private static Context mContext;
 
     /**
@@ -81,7 +80,7 @@ public class MyFirebaseDatabaseService extends IntentService {
         Log.d(TAG, "Init database");
 
         database = FirebaseDatabase.getInstance();
-        myRef = database.getReference("blitzerservice");
+        DatabaseReference myRef = database.getReference("blitzerservice_data");
 
         myRef.addValueEventListener(new ValueEventListener(){
 
@@ -109,5 +108,33 @@ public class MyFirebaseDatabaseService extends IntentService {
                 Log.w(TAG, "postComments:onCancelled", databaseError.toException());
             }
         });
+
+        DatabaseReference myRef2 = database.getReference("blitzerservice_status");
+
+        myRef2.addValueEventListener(new ValueEventListener(){
+
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                Log.d(TAG, "onDataChange:" + dataSnapshot.toString());
+                Log.d(TAG, "onDataChange:" + dataSnapshot.getChildrenCount());
+
+                final Iterator<DataSnapshot> it = dataSnapshot.getChildren().iterator();
+
+                Intent intent = new Intent(MainActivity.STATUS_CHANGED);
+
+                while (it.hasNext()) {
+                    DataSnapshot ds = it.next();
+                    intent.putExtra(ds.getKey(), Long.parseLong(ds.getValue(String.class)));
+                }
+
+                LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.w(TAG, "postComments:onCancelled", databaseError.toException());
+            }
+        });
+
     }
 }

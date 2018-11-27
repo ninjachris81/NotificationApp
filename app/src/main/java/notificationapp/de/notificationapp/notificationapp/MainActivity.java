@@ -16,10 +16,13 @@ import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.LinkedHashMap;
 
 import notificationapp.de.notificationapp.R;
@@ -30,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
 
     public static final String CHANNEL_ID = "NotificationApp_BlitzerService";
     public static final String DATA_CHANGED = "notificationapp.de.notificationapp.DATA_CHANGED";
+    public static final String STATUS_CHANGED = "notificationapp.de.notificationapp.STATUS_CHANGED";
 
     private static final int BLITZER_NOTIFICATION_ID = 1;
 
@@ -39,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private LinkedHashMap<String, String> itemMap = new LinkedHashMap<>();
 
     private ListView mainList;
-    //private TextView messageTitle;
+    private TextView statusMessage;
     //private TextView messageBody;
 
     private boolean isAppRunning = false;
@@ -62,6 +66,19 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     Log.e(TAG, "Intent has no extra !");
                 }
+            } else if (intent.getAction().equals(STATUS_CHANGED)) {
+                if (intent.hasExtra("TS")) {
+                    Date d = new Date(intent.getLongExtra("TS", 0));
+                    String format;
+
+                    if (DateUtils.isToday(d.getTime())) {
+                        format = "HH:mm:ss";
+                    } else {
+                        format = "dd.mm.   HH:mm:ss";
+                    }
+                    SimpleDateFormat dt = new SimpleDateFormat(format);
+                    statusMessage.setText("Last update:   " + dt.format(d));
+                }
             }
         }
     };
@@ -73,11 +90,12 @@ public class MainActivity extends AppCompatActivity {
         bManager = LocalBroadcastManager.getInstance(this);
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(DATA_CHANGED);
+        intentFilter.addAction(STATUS_CHANGED);
         bManager.registerReceiver(bReceiver, intentFilter);
 
         setContentView(R.layout.activity_main);
         mainList = (ListView) findViewById(R.id.mainList);
-        //messageTitle = (TextView) findViewById(R.id.messageTitle);
+        statusMessage = (TextView) findViewById(R.id.statusMessage);
         //messageBody = (TextView) findViewById(R.id.messageBody);
 
         adapter = new HashMapAdapter(this, R.layout.list_item, itemMap);
